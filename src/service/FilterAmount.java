@@ -4,11 +4,13 @@ public class FilterAmount {
 	private int increasePoint = 1;
 	private int decreasePoint = 1;
 	private int spacialDecreasePoint = 10;
+	private int spacialIncreasePoint = 10;
 	
 	public double filter(String text) {
 		StringBuilder strBuilder = new StringBuilder();
 		boolean isActiveCollect = false; // for control state open and close collect character
 		boolean spacialDecrease = false; // for control state spacial decrease point
+		boolean spacialIncrease = false; // for control state spacial increase point
 		
 		int currentPoint = 0;
 		double currentAmount = 0;
@@ -63,6 +65,18 @@ public class FilterAmount {
 				}
 			}
 			
+			// check current character is a Thai character, because it have condition for spacial increase point
+			if (this.isThaiCharacter(character)) {
+				if (character == 'ห' && (index + 2) < text.length() - 1) { // if character 'ห' is not last index + 2, Why +2 ? because หัก concat bwtween [ห, ั, ก]
+					char nextCharacter = text.charAt(index + 1);
+					char furtureCharacter = text.charAt(index + 2);
+					
+					if (nextCharacter == 'ั' && furtureCharacter == 'ก') { // if next index is equals 'ั' and furture index is equals 'ก', next number have high chance to be amount
+ 						spacialIncrease = true; // add spacial increase point for next number
+					}
+				} 
+			}
+			
 			if (this.isWhiteSpace(character) || this.isThaiCharacter(character) || index == text.length() - 1) {
 				if (!isActiveCollect) continue;
 				
@@ -76,6 +90,11 @@ public class FilterAmount {
 				if (spacialDecrease) {
 					tempPoint -= this.spacialDecreasePoint;
 					spacialDecrease = false;
+				}
+				
+				if (spacialIncrease) {
+					tempPoint += this.spacialIncreasePoint;
+					spacialIncrease = false;
 				}
 				
 				// loop for check condition to increase and decrease
@@ -150,6 +169,8 @@ public class FilterAmount {
 				// not duplicated, set isDuplicatedDot to true for next dot will not collect
 				isDuplicatedDot = true;
 			}
+			
+			if (this.isComma(c)) continue;
 			
 			// store character
 			strBuilder.append(c);

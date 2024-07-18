@@ -98,24 +98,24 @@ public class FilterAmount {
 				int tempPoint = 0; // assign point count to 0
 				boolean isDuplicatedDot = false; // for validate duplicate dot
 
-				if (spacialDecrease) {
-					tempPoint -= this.spacialDecreasePoint;
-					spacialDecrease = false;
-				}
-
-				if (spacialIncrease) {
-					tempPoint += this.spacialIncreasePoint;
-					spacialIncrease = false;
-				}
-
 				// loop for check condition to increase and decrease
 				for (int builderIndex = 0; builderIndex < strBuilder.length(); builderIndex++) {
 					char builderCharacter = strBuilder.charAt(builderIndex);
 
 					// if current character is not number, decrease point
-					if (!this.isNumber(builderCharacter) && !this.isDot(builderCharacter)
-							&& !this.isComma(builderCharacter))
+					if (!this.isNumber(builderCharacter) && !this.isDot(builderCharacter) && !this.isComma(builderCharacter))
 						tempPoint -= this.decreasePoint;
+
+					// if current character is a blackslash
+					if (this.isBlackSlash(builderCharacter)) {
+						if (spacialIncrease) { // if spacialIncrease is true, deduct point with spacialDecreasePoint
+							tempPoint -= this.spacialDecreasePoint;
+							spacialIncrease = false; // set spacial increase to false for not added point
+						} else {
+							tempPoint -= this.increasePoint;
+						}
+					}
+						
 
 					// if number start with 0 and length of builder equal 10, It might be a phone
 					// number, decrease point
@@ -127,6 +127,16 @@ public class FilterAmount {
 						tempPoint += this.increasePoint;
 						isDuplicatedDot = true;
 					}
+				}
+
+				if (spacialDecrease) {
+					tempPoint -= this.spacialDecreasePoint;
+					spacialDecrease = false;
+				}
+
+				if (spacialIncrease) {
+					tempPoint += this.spacialIncreasePoint;
+					spacialIncrease = false;
 				}
 
 				// if temp point more than current, set temp to current
@@ -168,6 +178,10 @@ public class FilterAmount {
 
 	private boolean isEngCharacter(char character) {
 		return character >= 'a' && character <= 'z';
+	}
+
+	private boolean isBlackSlash(char character) {
+		return character == '/';
 	}
 
 	private String formatTextAmount(String text) {
